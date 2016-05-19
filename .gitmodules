@@ -1,0 +1,6 @@
+[submodule "vendor/rapidjson"]
+	path = vendor/rapidjson
+	url = https://github.com/miloyip/rapidjson
+[submodule "vendor/yaml-cpp"]
+	path = vendor/yaml-cpp
+	url = https://github.com/jbeder/yaml-cpp.git

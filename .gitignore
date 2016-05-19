@@ -1,0 +1,8 @@
+deps/
+vendor/libyaml/
+
+json2yaml
+yaml2json
+
+.*.sw*
+*.o
