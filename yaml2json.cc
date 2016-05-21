@@ -7,6 +7,7 @@
 
 #include <rapidjson/filewritestream.h>
 #include <rapidjson/writer.h>
+#include <rapidjson/prettywriter.h>
 
 #include <yaml.h>
 
@@ -147,19 +148,30 @@ struct adapter {
   }
 };
 
-int main(int argc, char**){
-  if (argc != 1) {
-    std::cerr << "USAGE: yaml2json <YAML >JSON\n";
+template<typename Writer>
+void parse(Writer &&w, std::istream &i) {
+  adapter<Writer> adat{w};
+  yaml::parser p{i};
+  p.parse(adat);
+}
+
+int main(int argc, char **argv){
+  bool pretty = false;
+
+  if (argc == 1) {
+    // pass
+  } else if (argc == 2 && std::string{argv[1]} == "--pretty") {
+    pretty = true;
+  } else {
+    std::cerr << "USAGE: yaml2json [--pretty] <YAML >JSON\n";
     exit(1);
   }
 
   std::array<char, 102400> buf{};
   rapidjson::FileWriteStream os(stdout, &buf[0], buf.size());
-  rapidjson::Writer<rapidjson::FileWriteStream> w{os};
 
-  adapter<decltype(w)> adat{w};
-  yaml::parser p{std::cin};
-  p.parse(adat);
+  if (pretty) parse(rapidjson::PrettyWriter<decltype(os)>{os}, std::cin);
+  else        parse(rapidjson::Writer<decltype(os)>{os}, std::cin);
 
   return 0;
 }
