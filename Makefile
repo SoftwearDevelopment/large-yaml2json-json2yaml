@@ -1,33 +1,31 @@
 JOBS := $(shell < /proc/cpuinfo grep processor | wc -l)
 JOBS ?= 2
 
-CPPFLAGS += -I"$(PWD)/deps/include/" -I"$(PWD)/vendor/rapidjson/include/"
+CPPFLAGS += -I"$(PWD)/vendor/libyaml/include" -I"$(PWD)/vendor/rapidjson/include/"
 CXXFLAGS ?= -O2
 CXXFLAGS += -std=c++11 -Wall -Wpedantic -Wextra
 
 .PHONY: all
 all: json2yaml yaml2json
 
-json2yaml: json2yaml.o deps/lib/libyaml-cpp.a
-	$(CXX) $(LDFLAGS) json2yaml.o deps/lib/libyaml-cpp.a -o json2yaml
+j2y_objs = json2yaml.o
+json2yaml: $(j2y_objs) deps/build/libyaml/libyaml.a
+	$(CXX) $(LDFLAGS) $(j2y_objs) deps/build/libyaml/libyaml.a -o json2yaml
 
-yaml2json: yaml2json.o deps/lib/libyaml-cpp.a
-	$(CXX) $(LDFLAGS) yaml2json.o deps/lib/libyaml-cpp.a -o yaml2json
+y2j_objs = yaml2json.o
+yaml2json: $(y2j_objs) deps/build/libyaml/libyaml.a
+	$(CXX) $(LDFLAGS) $(y2j_objs) deps/build/libyaml/libyaml.a -o yaml2json
 
-json2yaml.o: deps/include/yaml-cpp/
-yaml2json.o: deps/include/yaml-cpp/
-
-deps/include/yaml-cpp/ deps/lib/libyaml-cpp.a:
-	mkdir -p "$(PWD)/"deps/build/yaml-cpp &&     \
-	  cd deps/build/yaml-cpp &&                  \
-		cmake -DCMAKE_INSTALL_PREFIX="$(PWD)/deps" -DYAML_CPP_BUILD_TOOLS=false \
-		      "$(PWD)/vendor/yaml-cpp" &&          \
-		make install -j "$(JOBS)"
+deps/build/libyaml/libyaml.a:
+	mkdir -p "$(PWD)/"deps/build/libyaml         && \
+	  cd deps/build/libyaml                      && \
+		cmake -DCMAKE_INSTALL_PREFIX="$(PWD)/deps" "$(PWD)/vendor/libyaml" && \
+		make -j4
 
 .PHONY: clean clean-deps
 
 clean:
-	rm -f yaml2json json2yaml json2yaml.o yaml2json.o:
+	rm -f yaml2json json2yaml json2yaml.o yaml2json.o
 
 clean-deps:
-	rm -R deps/
+	rm -Rf deps/
