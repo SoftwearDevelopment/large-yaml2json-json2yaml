@@ -76,23 +76,29 @@ inline bool yaml_scalar_parse_bool(const char *s, size_t len, bool &b) {
   else                                   {            return false; }
 }
 
+// Used by our parsers; stored globally to avoid
+// construction overhead
+// TODO: Thread local gives us undefined reference TLS init
+// function…how can
+// we make this thread safe?
+extern std::istringstream parser_ss;
+
 inline bool yaml_scalar_parse_int(const char *s, size_t len, int64_t &i) {
-  std::stringstream ss{};
-  ss.rdbuf()->pubsetbuf(const_cast<char*>(s), len);
+  parser_ss.rdbuf()->pubsetbuf(const_cast<char*>(s), len);
 
   uint64_t k=0;
   if (startswith(s, len, "0x")) {
-    ss >> std::hex >> k;
+    parser_ss >> std::hex >> k;
     i=k;
   } else if (startswith(s, len, "0o")) {
-    ss >> std::oct >> k;
+    parser_ss >> std::oct >> k;
     i=k;
   } else {
-    ss >> std::dec >> i;
+    parser_ss >> std::dec >> i;
   }
 
   return k <= (uint64_t)std::numeric_limits<int64_t>::max() // Fail on overflow
-      && !ss.fail() && ss.tellg() == -1;
+      && !parser_ss.fail() && parser_ss.tellg() == -1;
 }
 
 inline bool yaml_scalar_parse_double(const char *s, size_t len, double &d) {
@@ -104,29 +110,27 @@ inline bool yaml_scalar_parse_double(const char *s, size_t len, double &d) {
     return true;
   }
 
-  std::istringstream ss;
-  ss.rdbuf()->pubsetbuf(const_cast<char*>(s), len);
-  ss >> d;
-  return !ss.fail() && ss.tellg() == -1;
+  parser_ss.rdbuf()->pubsetbuf(const_cast<char*>(s), len);
+  parser_ss >> d;
+  return !parser_ss.fail() && parser_ss.tellg() == -1;
 }
 
 // Specialized number parser that checks if the given string
 // is a number; either an int or a double; lacks support for
 // .nan/.inf, but is useful for just detecting literals
 inline bool yaml_scalar_is_number(const char *s, size_t len) {
-  std::istringstream ss;
-  ss.rdbuf()->pubsetbuf(const_cast<char*>(s), len);
+  parser_ss.rdbuf()->pubsetbuf(const_cast<char*>(s), len);
 
   double d; int64_t i;
   if (startswith(s, len, "0x")) {
-    ss >> std::hex >> i;
+    parser_ss >> std::hex >> i;
   } else if (startswith(s, len, "0o")) {
-    ss >> std::oct >> i;
+    parser_ss >> std::oct >> i;
   } else {
-    ss >> d;
+    parser_ss >> d;
   }
 
-  return !ss.fail() && ss.tellg() == -1;
+  return !parser_ss.fail() && parser_ss.tellg() == -1;
 }
 
 // Check if the string can be pasted as a string literal
