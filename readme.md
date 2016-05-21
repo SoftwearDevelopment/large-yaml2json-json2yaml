@@ -29,31 +29,22 @@ the result.
 Thus the memory requirement of these programs is greater
 than the size of the input file plus the size of the output
 file.
+Given large files, these often run out of memory.
 
 This project utilizes a streaming approach: Reading data,
 conversion and writing the output are all done in parallel,
 using the same amount of memory, regardless how large the
-input file is.
-
-yaml2json still has a bug that makes it leak memory a rate
-of 1/100 of the input file, while json2yaml usually requires
-less than 10mb of memory, regardless of the input file size.
+input file is. The memory requirement is constant around 3MB
+for converting either json or yaml files of arbitrary size.
 
 NOTE: yaml2json and json2yaml still need to read each node
 in whole, so if you have a 20MB base64 encoded file in your
 json, this will need to be red into memory in whole.
 
-This project does not provide any significant speed
-improvements over other implementations at the moemnt, but
-I am very open to optimizations and expect that
-a performance improvement of 50x could be reached.
-
 ## Status
 
 This project seems to be working, but it is not extensively
 tested and definitely needs unit tests.
-It relies on a quick patch of yaml-cpp I wrote, that adds
-support for preserving type information.
 
 This should be working well enough for personal used, but
 I do not recommend employing it in a production environment.
