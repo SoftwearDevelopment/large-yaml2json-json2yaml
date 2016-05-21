@@ -110,18 +110,35 @@ inline bool yaml_scalar_parse_double(const char *s, size_t len, double &d) {
   return !ss.fail() && ss.tellg() == -1;
 }
 
+// Specialized number parser that checks if the given string
+// is a number; either an int or a double; lacks support for
+// .nan/.inf, but is useful for just detecting literals
+inline bool yaml_scalar_is_number(const char *s, size_t len) {
+  std::istringstream ss;
+  ss.rdbuf()->pubsetbuf(const_cast<char*>(s), len);
+
+  double d; int64_t i;
+  if (startswith(s, len, "0x")) {
+    ss >> std::hex >> i;
+  } else if (startswith(s, len, "0o")) {
+    ss >> std::oct >> i;
+  } else {
+    ss >> d;
+  }
+
+  return !ss.fail() && ss.tellg() == -1;
+}
+
 // Check if the string can be pasted as a string literal
 // without escaping. Texts that would be interpreted as
 // booleans, numbers or would brake the syntax need to be
 // escaped.
 inline bool is_yaml_literal_string(const char *s, size_t len) {
-  double d; int64_t i;
   return smulticmp(s, len, YAML_ALL_LITS)
       || (len>0 && cmulticmp(s[0], ' ', '|', '*', '&', '!', '\'', '"',
                                     '{', '}', '>', '-', '@', '`', '%'))
       || startswith(s, len, "---")
       || s[len-1] == ' ' // Can not end on a space
       || containsc(s, len, '\n', '\t', '#', ',')
-      || yaml_scalar_parse_int(s, len, i)
-      || yaml_scalar_parse_double(s, len, d);
+      || yaml_scalar_is_number(s, len);
 }
