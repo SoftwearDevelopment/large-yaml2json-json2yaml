@@ -32,21 +32,16 @@ struct unknown_parser_event : parser_exception {
 };
 
 struct parser : yaml_parser_t {
-  parser()  {
+  parser(yaml_encoding_t encoding=YAML_UTF8_ENCODING)  {
     yaml_parser_initialize(this);
-    yaml_parser_set_encoding(this, YAML_UTF8_ENCODING);
+    yaml_parser_set_encoding(this, encoding);
   }
 
   ~parser() { yaml_parser_delete(this); }
 
-  parser(std::istream &s) : parser{} {
-    yaml_parser_set_input(this,
-      [](void *s_, yaml_char_t *buf, size_t buf_s, size_t *red) -> int {
-        std::istream &s = *((std::istream*)s_);
-        s.read((char*)buf, buf_s);
-        *red = s.gcount();
-        return true;
-      }, &s);
+  parser(FILE *f, yaml_encoding_t encoding=YAML_UTF8_ENCODING)
+      : parser{encoding} {
+    yaml_parser_set_input_file(this, f);
   }
 
   event next_event() {
@@ -148,8 +143,8 @@ struct adapter {
   }
 };
 
-template<typename Writer>
-void parse(Writer &&w, std::istream &i) {
+template<typename Writer, typename Stream>
+void parse(Writer &&w, Stream &i) {
   adapter<Writer> adat{w};
   yaml::parser p{i};
   p.parse(adat);
@@ -170,8 +165,8 @@ int main(int argc, char **argv){
   std::array<char, 102400> buf{};
   rapidjson::FileWriteStream os(stdout, &buf[0], buf.size());
 
-  if (pretty) parse(rapidjson::PrettyWriter<decltype(os)>{os}, std::cin);
-  else        parse(rapidjson::Writer<decltype(os)>{os}, std::cin);
+  if (pretty) parse(rapidjson::PrettyWriter<decltype(os)>{os}, stdin);
+  else        parse(rapidjson::Writer<decltype(os)>{os},       stdin);
 
   return 0;
 }

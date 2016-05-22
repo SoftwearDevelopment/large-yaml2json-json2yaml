@@ -87,21 +87,16 @@ struct emitter_exception : std::exception {
 struct emitter : yaml_emitter_t {
   emitter(yaml_encoding_t encoding=YAML_UTF8_ENCODING) {
     yaml_emitter_initialize(this);
-    yaml_emitter_set_width(this, std::numeric_limits<int>::max()-1);
+    yaml_emitter_set_width(this, std::numeric_limits<int>::max());
     yaml_emitter_set_unicode(this, true);
     yaml_emitter_set_break(this, YAML_LN_BREAK);
-    //yaml_emitter_set_canonical(this, true);
 
     emit(yaml::event::stream_start{encoding});
   }
 
-  emitter(std::ostream &s, yaml_encoding_t encoding=YAML_UTF8_ENCODING)
+  emitter(FILE *f, yaml_encoding_t encoding=YAML_UTF8_ENCODING)
       : emitter{encoding} {
-    yaml_emitter_set_output(this,
-      [](void *s_, yaml_char_t *buf, size_t size) -> int {
-        ((std::ostream*)s_)->write((const char*)buf, size);
-        return true;
-      }, &s);
+    yaml_emitter_set_output_file(this, f);
   }
 
   ~emitter() {
@@ -196,7 +191,7 @@ int main(int argc, char **) {
     exit(1);
   }
 
-  yaml::emitter em{std::cout};
+  yaml::emitter em{stdout};
   adapter adat{em};
 
   std::array<char, 102400> buf{};
