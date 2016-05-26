@@ -207,7 +207,5 @@ int main(int argc, char **) {
     exit(21);
   }
 
-  std::cout << '\n';
-
   return 0;
 }
