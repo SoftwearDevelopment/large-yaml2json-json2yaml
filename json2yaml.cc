@@ -113,8 +113,7 @@ struct emitter : yaml_emitter_t {
     return emit(ev.inner);
   }
 
-  bool emit(event::event &&ev_) {
-    event::event ev{std::move(ev_)};
+  bool emit(event::event &&ev) {
     return emit(ev);
   }
 };
