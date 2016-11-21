@@ -120,7 +120,7 @@ struct emitter : yaml_emitter_t {
 
 }
 
-class adapter {
+class adapter : public rapidjson::BaseReaderHandler<> {
 public:
   yaml::emitter &em;
 
@@ -135,6 +135,9 @@ public:
   ~adapter() {
     em.emit(yaml::event::document_end{});
   }
+
+  typedef rapidjson::BaseReaderHandler<adapter> super;
+  typedef typename super::Ch Ch;
 
   bool plain(const char *s, size_t size) {
     return em.emit(yaml::event::scalar{s, size, YAML_PLAIN_SCALAR_STYLE});
