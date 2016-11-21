@@ -147,27 +147,13 @@ public:
     return plain(s.c_str(), s.size());
   }
 
-  template<typename T>
-  bool cast(T v) {
-    ss.seekp(0);
-    ss << v;
-    return plain(&strbuf[0], ss.tellp());
-  }
-
   bool Null() { return plain("~"); }
 
-  // TODO: Copy without decoding? (to get arbitrary precision)
   // TODO: Is there a template version of this?
-  bool Bool(bool x)       { return plain(x ? "true" : "false"); }
-  bool Int(int x)         { return cast(x); }
-  bool Uint(unsigned x)   { return cast(x); }
-  bool Int64(int64_t x)   { return cast(x); }
-  bool Uint64(uint64_t x) { return cast(x); }
-  bool Double(double x)   {
-    ss.seekp(0);
-    ss << x;
-    if (ceil(x) == x) ss << ".0";
-    return plain(&strbuf[0], ss.tellp());
+  bool Bool(bool x) { return plain(x ? "true" : "false"); }
+
+  bool RawNumber(const char* str, size_t len, bool=false) {
+    return plain(str, len);
   }
 
   // TODO: Pretty multi line strings?
@@ -199,8 +185,11 @@ int main(int argc, char **) {
   std::array<char, 102400> buf{};
   rapidjson::FileReadStream is{stdin, &buf[0], buf.size()};
 
+  constexpr auto parse_flags = 0
+    | rapidjson::kParseNumbersAsStringsFlag;
+
   rapidjson::Reader r{};
-  r.Parse(is, adat);
+  r.Parse<parse_flags>(is, adat);
 
   if (r.HasParseError()) {
     std::cerr << "JSON Parser error at " << r.GetErrorOffset()
