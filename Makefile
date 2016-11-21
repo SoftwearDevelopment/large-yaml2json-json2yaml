@@ -17,6 +17,8 @@ y2j_objs = yaml2json.o yaml_scalar_parse.o
 yaml2json: $(y2j_objs) deps/build/libyaml/libyaml.a
 	$(CXX) $(LDFLAGS) $(y2j_objs) deps/build/libyaml/libyaml.a -o yaml2json
 
+$(y2j_objs) $(j2y_objs): yaml_scalar_parse.hpp
+
 deps/build/libyaml/libyaml.a:
 	mkdir -p "$(PWD)/"deps/build/libyaml         && \
 	  cd deps/build/libyaml                      && \
