@@ -111,21 +111,27 @@ struct adapter {
   }
   void document_end()   { /* pass */ }
   void alias()          { error("Aliases are unsupported"); }
-  void sequence_start() { w.StartArray();  stack.push(-1); }
-  void sequence_end()   { w.EndArray();    stack.pop(); }
-  void mapping_start()  { w.StartObject(); stack.push(0); }
-  void mapping_end()    { w.EndObject();   stack.pop(); }
+  void sequence_start() { w.StartArray();  register_obj_kv(); stack.push(-1); }
+  void sequence_end()   { w.EndArray();                       stack.pop(); }
+  void mapping_start()  { w.StartObject(); register_obj_kv(); stack.push(0); }
+  void mapping_end()    { w.EndObject();                      stack.pop(); }
+
+  bool is_in_object() { return stack.top() != -1; }
+
+  // We keep track of whether we are inserting a key or
+  // a value, because we need to make sure keys are *always*
+  // quoted
+  bool token_is_key() {
+    return is_in_object() && (stack.top() % 2) == 0;
+  }
+  void register_obj_kv() {
+    if (is_in_object()) stack.top()++;
+  }
 
   void scalar(const char *s, size_t len, yaml_scalar_style_t style) {
-    // We keep track of whether we are inserting a key or
-    // a value, so we can skip the check below for values
-    bool in_obj = stack.top() != -1;
-    bool next_key = in_obj && (stack.top() % 2) == 0;
-    if (in_obj) stack.top()++;
-
     bool b; int64_t i; double d;
 
-    if(next_key || style != YAML_PLAIN_SCALAR_STYLE) {
+    if(token_is_key() || style != YAML_PLAIN_SCALAR_STYLE) {
       w.String(s, len); // Explicit strings and keys are just strings
     } else if (yaml_scalar_is_null(s, len)) {
       w.Null();
@@ -140,6 +146,8 @@ struct adapter {
     } else {
       w.String(s, len); // Fall back to string, when the literal is nothing else
     }
+
+    register_obj_kv();
   }
 };
 
