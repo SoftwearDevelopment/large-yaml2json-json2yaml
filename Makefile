@@ -21,7 +21,7 @@ deps/build/libyaml/libyaml.a:
 	mkdir -p "$(PWD)/"deps/build/libyaml         && \
 	  cd deps/build/libyaml                      && \
 		cmake -DCMAKE_INSTALL_PREFIX="$(PWD)/deps" "$(PWD)/vendor/libyaml" && \
-		make -j4
+		$(MAKE)
 
 .PHONY: clean clean-deps
 
