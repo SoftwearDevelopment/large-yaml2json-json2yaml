@@ -2,7 +2,7 @@ JOBS := $(shell < /proc/cpuinfo grep processor | wc -l)
 JOBS ?= 2
 
 CPPFLAGS += -I"$(PWD)/vendor/libyaml/include" -I"$(PWD)/vendor/rapidjson/include/"
-CXXFLAGS ?= -O2
+CXXFLAGS ?= -O3
 CXXFLAGS += -std=c++11 -Wall -Wpedantic -Wextra
 LDFLAGS  += -std=c++11 -Wall -Wpedantic -Wextra
 
