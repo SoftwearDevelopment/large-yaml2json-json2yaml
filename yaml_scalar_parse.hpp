@@ -81,10 +81,13 @@ inline bool yaml_scalar_parse_bool(const char *s, size_t len, bool &b) {
 // TODO: Thread local gives us undefined reference TLS init
 // function…how can
 // we make this thread safe?
+// TODO: This is crap. Get rid of this.
 extern std::istringstream parser_ss;
 
 inline bool yaml_scalar_parse_int(const char *s, size_t len, int64_t &i) {
   parser_ss.rdbuf()->pubsetbuf(const_cast<char*>(s), len);
+  parser_ss.seekg(0);
+  parser_ss.clear();
 
   uint64_t k=0;
   if (startswith(s, len, "0x")) {
@@ -111,6 +114,8 @@ inline bool yaml_scalar_parse_double(const char *s, size_t len, double &d) {
   }
 
   parser_ss.rdbuf()->pubsetbuf(const_cast<char*>(s), len);
+  parser_ss.seekg(0);
+  parser_ss.clear();
   parser_ss >> d;
   return !parser_ss.fail() && parser_ss.tellg() == -1;
 }
@@ -120,6 +125,8 @@ inline bool yaml_scalar_parse_double(const char *s, size_t len, double &d) {
 // .nan/.inf, but is useful for just detecting literals
 inline bool yaml_scalar_is_number(const char *s, size_t len) {
   parser_ss.rdbuf()->pubsetbuf(const_cast<char*>(s), len);
+  parser_ss.seekg(0);
+  parser_ss.clear();
 
   double d; int64_t i;
   if (startswith(s, len, "0x")) {
